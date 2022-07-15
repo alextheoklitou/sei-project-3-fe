@@ -229,3 +229,94 @@ const handleMessageButtonClick = () => {
   }
 ```
 ![Screen grab of profile show page](./src/assets/profileShow.png)
+
+### Chat Feature
+The most challenging aspect of this project was the Chat Feature. We used ```useEffect``` to set our chat data into state. One challenge was distinguishing which user was sending each message and which user was receiving it. Thankfully, we had anticipated this and in our schema, for each message sent we added both the sent user ID and the received user ID. The below code snippet allowed this to be displayed on the front-end:
+```js
+const [sender, setSender] = React.useState(null)
+  const [chat, setChat] = React.useState(null)
+  const [userId, setUserId] = React.useState('')
+  const currentUserId = JSON.parse(localStorage.getItem('userId'))
+
+  React.useEffect(() => {
+    const getData = async () => {
+      try {
+        const senderData = await getSingleProfile(userId)
+        setSender(senderData.data)
+        const chatData = await getSingleChat(chatId)
+        setChat(chatData.data)
+        if (chatObject.userOne !== currentUserId) {
+          return setUserId(chatObject.userOne)
+        } else {
+          return setUserId(chatObject.userTwo)
+        }
+      } catch (err) {
+        console.log(err)
+      }
+    }
+    getData()
+  }, [userId, chatId, chatObject.userOne, chatObject.userTwo, currentUserId])
+```
+Another challenge we faced with the chat feature was making it appear as if the conversation was 'live', meaning messages would appear instantaneously without having to refresh the page. We overcame this by using a ```setInterval``` which pulled the data every 500ms:
+```js
+const interval = setInterval(getData, 500)
+```
+![Git of chat feature](./src/assets/chatgif.gif)
+When we were getting somewhere with the chat feature and were quite pleased with it, we once again found another issue. We wanted the user to be able to delete their own messages, which we were able to do using the userID stored in Local Storage matching the userID of the message. However, we realised that once all messages in a chat were deleted, the chat itself still remained and appeared empty in out chats index page. Thankfully, using an 'if statement' I was able to check whether the length of the chat array was zero or not every time a message in that chat was deleted, and if it was, the chat itself would delete. This meant that we had to go back to the back-end and create a ```chatDelete``` controller and using the below code in the front-end we were able to achieve this to improve user experience:
+```js
+  const handleDelete = async () => {
+    if (window.confirm('Do you want to delete this message?')) {
+      try {
+        await deleteMessage(chatId, singleMessage._id)
+        const { data } = await getSingleChat(chatId)
+        if (data.messages.length === 0) {
+          await deleteChat(chatId)
+          navigate('/chat')
+        } else {
+          setAllMessages(data.messages)
+        }
+      } catch (err) {
+        console.log(err)
+      }
+    }
+  }
+```
+### Front-End Features to Improve User Experience
+#### Profile Edit/Delete
+We wanted to give the user the option to edit and delete their profile. Joe worked on building the edit form and used state to pre-populate the form with the user's pre-existing profile information.
+
+Using state we were also able to delete the user's messages when they delete their profile, in order to abide by data protection. We stored their chat history in state when they would load their profile page so that this feature would be ready to go as soon as the user decided to delete.
+### Registration Redirect
+One feature that was quite important to us (and proved more challenging than expected) was logging in the user as soon as they register, rather than redirecting them to the login page so they then have to log in themselves. The most challenging aspect of this was retrieving the data from the back-end as soon as it is created, as we couldn't source the userID from the form itself and this needed to be stored in Local Storage for our chat feature to work. We were able to go around this by retrieving all profile data once the user is registered, and then filtering through that using the user's email to fine the appropriate user ID, all within our ```handleSubmit``` function as shown below:
+```js
+ const handleSubmit = async (e) => {
+  e.preventDefault()
+  try {
+    await registerUser(formData)
+    const allProfiles = await getAllProfiles()
+    const res = await loginUser(loginFormData)
+    setToken(res.data.token)
+    const userId = allProfiles.data.find(profile => {
+      if (profile.email === formData.email) {
+        return profile
+      } else return
+    })._id
+    localStorage.setItem('userId', JSON.stringify(userId))
+    navigate(`/account/${userId}/edit`)
+  } catch (err) {
+    setIsError(err)
+  }
+}
+```
+## Key Learnings
+* One of biggest takeaways for me working on the first group project, was the importance of merging our code multiple times a day. This led to less conflicts when merging and thus we would waste less time trying to resolve them.
+* Creating the chat feature was a huge learning experience for me as this was uncharted territory. I learned the importance of flexibility with your back-end and that you will often have to go back and make changes to it as you build the front-end.
+* The biggest takeaway was definitely the importance of having open communication and collaboration with your teammates as well as daily stand ups.
+* I have to say, I really enjoyed working on this project with Esin and Joe and it was probably the project where I learned as a coded the most.
+
+## Future Improvements
+* Mobile friendly/responsive design
+* Timestamp and 'read' feature on messages
+* Further error handling
+* Improve the home page design
+* Ability to like and rate profiles
