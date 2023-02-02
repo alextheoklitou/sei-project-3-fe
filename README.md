@@ -42,7 +42,6 @@ The brief was to create a full-stack application by creating our own backend and
 * Rating of profiles
 
 ## Deployed Version
-Since Heroku have stopped their free subscription the back end of the project is no longer supported unfortunately however the project can still be run on local server.
 [View the deployed version of the app](https://sniff.netlify.app/)
 ![Screen Grab of home page](./src/assets/homePage.png)
 You may use the following credentials to sign in:
